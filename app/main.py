@@ -32,7 +32,7 @@ class Dictionary:
 
         for element in old_hash_table:
             if element is not None:
-                key, index, value = element
+                key, _, value = element
                 index = self._find_slot(key)
                 self.hash_table[index] = (key, self._hash(key), value)
                 self.length += 1
