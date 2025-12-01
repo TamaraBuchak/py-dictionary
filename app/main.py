@@ -34,14 +34,14 @@ class Dictionary:
             if element is not None:
                 key, index, value = element
                 index = self._find_slot(key)
-                self.hash_table[index] = (key, index, value)
+                self.hash_table[index] = (key, self._hash(key), value)
                 self.length += 1
 
     def __setitem__(self, key: Hashable, value: Any) -> None:
         index = self._find_slot(key)
         if self.hash_table[index] is None:
             self.length += 1
-        self.hash_table[index] = (key, index, value)
+        self.hash_table[index] = (key, self._hash(key), value)
         if self.length / self.capacity > self.constant_resize:
             self._resize()
 
@@ -62,7 +62,7 @@ class Dictionary:
 
     def __delitem__(self, key: Hashable) -> None:
         index = self._hash(key)
-        while True:
+        for _ in range(self.capacity):
             if self.hash_table[index] is None:
                 raise KeyError(f"Key {key} does not exist")
             if self.hash_table[index][0] == key:
@@ -73,9 +73,9 @@ class Dictionary:
 
         next_index = (index + 1) % self.capacity
         while self.hash_table[next_index] is not None:
-            changed_key, changed_index, changed_value \
+            changed_key, changed_hash, changed_value \
                 = self.hash_table[next_index]
             self.hash_table[next_index] = None
             self.length -= 1
-            self[changed_key] = changed_index, changed_value
+            self[changed_key] = changed_value
             next_index = (next_index + 1) % self.capacity
