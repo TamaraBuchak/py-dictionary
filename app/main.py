@@ -32,27 +32,30 @@ class Dictionary:
 
         for element in old_hash_table:
             if element is not None:
-                key, value = element
+                key, index, value = element
                 index = self._find_slot(key)
-                self.hash_table[index] = (key, value)
+                self.hash_table[index] = (key, index, value)
                 self.length += 1
 
     def __setitem__(self, key: Hashable, value: Any) -> None:
         index = self._find_slot(key)
         if self.hash_table[index] is None:
             self.length += 1
-        self.hash_table[index] = (key, value)
+        self.hash_table[index] = (key, index, value)
         if self.length / self.capacity > self.constant_resize:
             self._resize()
 
-    def __getitem__(self, key: Hashable) -> None:
+    def __getitem__(self, key: Hashable) -> Any:
         index = self._hash(key)
-        while True:
+
+        for _ in range(self.capacity):
             if self.hash_table[index] is None:
-                raise KeyError
+                raise KeyError(f"Key {key} does not exist")
             if self.hash_table[index][0] == key:
-                return self.hash_table[index][1]
+                return self.hash_table[index][2]
             index = (index + 1) % self.capacity
+
+        raise KeyError(f"Key {key} does not exist")
 
     def __len__(self) -> int:
         return self.length
@@ -61,7 +64,18 @@ class Dictionary:
         index = self._hash(key)
         while True:
             if self.hash_table[index] is None:
-                raise KeyError(key)
+                raise KeyError(f"Key {key} does not exist")
             if self.hash_table[index][0] == key:
                 break
             index = (index + 1) % self.capacity
+        self.hash_table[index] = None
+        self.length -= 1
+
+        next_index = (index + 1) % self.capacity
+        while self.hash_table[next_index] is not None:
+            changed_key, changed_index, changed_value \
+                = self.hash_table[next_index]
+            self.hash_table[next_index] = None
+            self.length -= 1
+            self[changed_key] = changed_index, changed_value
+            next_index = (next_index + 1) % self.capacity
